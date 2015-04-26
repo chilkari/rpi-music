@@ -1,0 +1,95 @@
+#!/bin/sh
+
+### BEGIN INIT INFO
+# Provides:          rpi-audio
+# Required-Start:    $all
+# Required-Stop:     $all
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Script to start/stop jackd and audio software
+# Description:       Script to start/stop jackd and audio software
+### END INIT INFO
+
+prep_system() {
+    # Shutdown unneeded things.
+    logger "rpi-audio: Stopping unnecessary services..."
+    sudo service ntp stop 2>&1 &
+    sudo service triggerhappy stop 2>&1 &
+    #sudo service dbus stop 2>&1 &
+    #sudo killall console-kit-daemon 2>&1 &  (doesn't exist)
+    #sudo killall pokitd 2>&1 & (doesn't exist)
+    
+    sudo mount -o remount,size=128M /dev/shm
+    sudo killall gvfsd 2>&1 &
+    #sudo killall dbus-daemon 2>&1 &
+    #sudo killall dbus-launch 2>&1 &
+    
+    logger "rpi-audio: Setting CPU governor to performance..."
+    echo -n performance | sudo tee /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+}
+
+start_jack() {
+    logger "rpi-audio: starting JackD..."
+    RUNNING=`pgrep jackd`
+    if [ "${#RUNNING}" -gt 0 ] ; then
+        echo "JackD already running."
+    else
+        export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket
+        sudo -u pi jackd -P84 -p32 -t2000 -d alsa -dhw:Device -p 256 -n 2 -r 44100 -s -P -znone >> /home/pi/jack.log 2>&1 &
+    fi
+}
+
+start_setbfree() {
+    # Start setBfree
+    logger "rpi-audio: starting setBfree..."
+    RUNNING=`pgrep setBfree`
+    if [ "${#RUNNING}" -gt 0 ] ; then
+        echo "setBfree already running."
+    else
+        sudo -u pi setBfree midi.driver=alsa midi.controller.upper.30=overdrive.enable whirl.speed-preset=1 whirl.horn.acceleration=1.0 whirl.horn.deceleration=1.3 whirl.horn.fastrpm=432.36 whirl.drum.fastrpm=357.3 reverb.wet=0.2 reverb.dry=0.8 >> /home/pi/setbfree.log 2>&1 &
+    fi
+}
+
+connect_midi() {
+    # Connect setBFree to USB 1x1 interface:
+    logger "rpi-audio: Connecting MIDI interface to setBfree..."
+    midi=$(aconnect -i | grep client | grep -i "USB MS1x1" | cut -d " " -f2 | tr -d ":")
+    logger "rpi-audio: midi: $midi"
+    setbfree=$(aconnect -o | grep client | grep -i "SETBFREE" | cut -d " " -f2 | tr -d ":")
+    logger "rpi-audio: setbfree: $setbfree"
+    logger "rpi-audio: connecting midi, $midi to setbfree: $setbfree"
+    aconnect $midi $setbfree
+}
+
+# Handling for start/stop args
+case "$1" in
+  start)
+    logger "rpi-audio: starting..." 
+    # run application you want to start
+    prep_system
+    start_jack
+    sleep 3
+    start_setbfree
+    sleep 3
+    connect_midi
+    ;;
+  stop)
+    logger "rpi-audio: stopping..."
+    killall setBfree
+    killall jackd
+    ;;
+  clear)
+    if [ -f /home/pi/setbfree.log ]; then
+        sudo rm /home/pi/setbfree.log
+    fi
+    if [ -f /home/pi/jack.log ]; then
+        sudo rm /home/pi/jack.log
+    fi
+    ;;
+  *)
+    echo "Usage: /etc/init.d/rpi-audio {start|stop|clear}"
+    exit 1
+    ;;
+esac
+
+exit 0

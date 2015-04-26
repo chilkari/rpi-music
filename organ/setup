@@ -41,6 +41,27 @@ else
     rm setbfree_0.7.5-1_armhf.deb
 fi
 
+# Need to modify some real-time audio settings.
+# Note - rtprio should end up being 84 (not 99).
+# TODO - might have to patch /etc/security/limits.d/audio.conf
+# "-p critical" is my attempt at silent execution that won't 
+# wait for user prompt.
+if [ -f /etc/security/limits.d/audio.conf ]; then
+    echo "Real-time audio already enabled."
+else
+    sudo dpkg-reconfigure -p critical jackd1
+    # Add pi user to audio group:
+    sudo usermod -a -G audio pi
+fi
 
-# TODO - init.d script...
+# OK - rc.local doesn't work. Need to actually be logged-in, so what I've found
+# is using auto-login, and a script in my pi user's .profile file.
+# edit /etc/inittab, find 1:2345:respawn:sbin/getty ... tty1 (args vary) will
+# be followed by a bunch of other tty commands. these are the login prompts.
+# comment out that first one, and change it to:
+# 1:2345:respawn:/bin/login -f pi tty1 </dev/tty1 >/dev/tty1 2>&1
+# Then add the following line to /home/pi/.profile
+# /home/pi/rpi-music/organ/rpi-audio start >> /home/pi/rpi-music/organ/rpi-audio.log 2>&1 &
+#
+# TODO - find way to do the above automatically in this script.
 

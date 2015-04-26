@@ -1,0 +1,6 @@
+#!/bin/sh
+
+su -c "/home/pi/rpi-music/organ/rpi-audio > /home/pi/rpi-music/organ/rpi-audio.log 2>&1" pi &
+
+exit 0
+
