@@ -3,7 +3,7 @@
 # Start JACK
 echo "starting JackD..."
 export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket
-jackd -P84 -p32 -t2000 -d alsa -dhw:Device -p 256 -n 2 -r 44100 -s -znone -P &
+jackd -P84 -p32 -t2000 -d alsa -dhw:Device -p 256 -n 2 -r 44100 -s -P -znone &
 
 sleep 3
 
@@ -20,3 +20,4 @@ echo "midi: $midi"
 setbfree=$(aconnect -o | grep client | grep -i "SETBFREE" | cut -d " " -f2 | tr -d ":")
 echo "setbfree: $setbfree"
 aconnect $midi $setbfree
+
