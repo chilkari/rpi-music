@@ -54,14 +54,25 @@ else
     sudo usermod -a -G audio pi
 fi
 
-# OK - rc.local doesn't work. Need to actually be logged-in, so what I've found
-# is using auto-login, and a script in my pi user's .profile file.
-# edit /etc/inittab, find 1:2345:respawn:sbin/getty ... tty1 (args vary) will
-# be followed by a bunch of other tty commands. these are the login prompts.
-# comment out that first one, and change it to:
-# 1:2345:respawn:/bin/login -f pi tty1 </dev/tty1 >/dev/tty1 2>&1
-# Then add the following line to /home/pi/.profile
-# /home/pi/rpi-music/organ/rpi-audio start >> /home/pi/rpi-music/organ/rpi-audio.log 2>&1 &
-#
-# TODO - find way to do the above automatically in this script.
+# Configure the RPI to auto-login as "pi" and then add the audio
+# launcher script (rpi-audio) to the pi user's ~/.profile.
+
+# inittab for auto-login
+if grep -q "1:2345:respawn:/bin/login" /etc/inittab; then
+    echo "/etc/inittab already modified for auto-login"
+else
+    sudo cp /etc/inittab /etc/inittab.bak
+    sudo sed 's/1:2345:respawn:\/sbin\/getty.*$/1:2345:respawn:\/bin\/login -f pi tty1 <\/dev\/tty1 >\/dev\/tty1 2>\&1/' /etc/inittab | sudo tee /etc/inittab.new
+    sudo mv /etc/inittab.new /etc/inittab
+fi
+
+# modify .profile to include launcher
+if grep -q "rpi-audio" /home/pi/.profile; then
+    echo ".profile already includes rpi-audio launcher"
+else
+    echo "Adding rpi-audio launcher to tail of ~/.profile..."
+    echo "/home/pi/rpi-music/organ/rpi-audio start >> /home/pi/rpi-music/organ/rpi-audio.log 2>&1 &" >> /home/pi/.profile
+fi
+
+echo "rpi-audio setup complete."
 
