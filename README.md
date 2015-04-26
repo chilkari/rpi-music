@@ -20,5 +20,5 @@ You'll need proper credentials to clone, so copy private key (for github) up to 
 
 This can be test with a simple `ssh github.com`
 
-Then clone this repo: `git clone https://github.com/chilkari/rpi-music.git`
+Then clone this repo: `git clone git@github.com:chilkari/rpi-music.git`
 
