@@ -10,36 +10,16 @@ else
     sudo apt-get update
 fi
 
-# MidiMan 1x1 interface support
-if [ -f /etc/udev/rules.d/99-midisport-firmware.rules ];
+
+
+# SooperLooper
+if [ -f /usr/bin/sooperlooper ];
 then
-    echo "MidiMan 1x1 support already in place."
+    echo "SooperLooper already installed."
 else
-    sudo apt-get install -y midisport-firmware
-    sudo cp midiman.conf /etc/udev/rules.d/99-midisport-firmware.rules
+    sudo apt-get install -y sooperlooper
 fi
 
-# SETBFREE
-if [ -f /usr/bin/setBfree ];
-then
-    echo "setBfree already installed."
-else
-
-    # Dependencies for setBfree
-    sudo apt-get install -y libjack-dev libasound2 libasound2-dev libsndfile1 libsndfile1-dev libftgl-dev libglu1-mesa-dev ttf-bitstream-vera lv2-dev libzita-convolver-dev liblo-dev
-    
-    # Now, install from a deb file I have in S3. I'm not seeing this in normal
-    # raspbian repos, but it seems to sort of be in the ubuntu launchpad for arm.
-    # TODO - sort this out so I have the latest version...
-    
-    wget https://s3-us-west-2.amazonaws.com/chilkari-raspberry-pi-music/setbfree_0.7.5-1_armhf.debsudo dpkg -i setbfree_0.7.5-1_armhf.deb
-    # Ensure we have deps:
-    sudo apt-get install -f
-    # Remove unneeded packages
-    sudo apt-get autoremove
-    # Remove the downloaded setbfree deb file:
-    rm setbfree_0.7.5-1_armhf.deb
-fi
 
 # Need to modify some real-time audio settings.
 # Note - rtprio should end up being 84 (not 99).
@@ -71,15 +51,7 @@ if grep -q "rpi-audio" /home/pi/.profile; then
     echo ".profile already includes rpi-audio launcher"
 else
     echo "Adding rpi-audio launcher to tail of ~/.profile..."
-    echo "/home/pi/rpi-music/organ/rpi-audio start >> /home/pi/rpi-music/organ/rpi-audio.log 2>&1 &" >> /home/pi/.profile
-fi
-
-# Install mididings
-if [ -f /usr/bin/mididings ];
-then
-    echo "mididings already installed."
-else
-    sudo apt-get install -y mididings
+    echo "/home/pi/rpi-music/looper/rpi-audio start >> /home/pi/rpi-music/organ/rpi-audio.log 2>&1 &" >> /home/pi/.profile
 fi
 
 echo "rpi-audio setup complete."

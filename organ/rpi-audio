@@ -12,7 +12,7 @@
 
 prep_system() {
     # Shutdown unneeded things.
-    logger "rpi-audio: Stopping unnecessary services..."
+    echo "rpi-audio: Stopping unnecessary services..."
     sudo service ntp stop 2>&1 &
     sudo service triggerhappy stop 2>&1 &
     #sudo service dbus stop 2>&1 &
@@ -24,24 +24,24 @@ prep_system() {
     #sudo killall dbus-daemon 2>&1 &
     #sudo killall dbus-launch 2>&1 &
     
-    logger "rpi-audio: Setting CPU governor to performance..."
+    echo "rpi-audio: Setting CPU governor to performance..."
     echo -n performance | sudo tee /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
 }
 
 start_jack() {
-    logger "rpi-audio: starting JackD..."
+    echo "rpi-audio: starting JackD..."
     RUNNING=`pgrep jackd`
     if [ "${#RUNNING}" -gt 0 ] ; then
         echo "JackD already running."
     else
         export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket
-        sudo -u pi jackd -P84 -p32 -t2000 -d alsa -dhw:Device -p 256 -n 2 -r 44100 -s -P -znone >> /home/pi/jack.log 2>&1 &
+        sudo -u pi jackd -P84 -p32 -t2000 -d alsa -dhw:Device -p 256 -n 3 -r 44100 -s -P -znone >> /home/pi/jack.log 2>&1 &
     fi
 }
 
 start_setbfree() {
     # Start setBfree
-    logger "rpi-audio: starting setBfree..."
+    echo "rpi-audio: starting setBfree..."
     RUNNING=`pgrep setBfree`
     if [ "${#RUNNING}" -gt 0 ] ; then
         echo "setBfree already running."
@@ -50,33 +50,68 @@ start_setbfree() {
     fi
 }
 
+start_mididings() {
+    # Start mididings
+    if ps -ef | grep [p]ython organ-mididings; then
+        echo "mididings already running."
+    else
+        python organ-mididings.py &
+    fi
+}
+
 connect_midi() {
     # Connect setBFree to USB 1x1 interface:
-    logger "rpi-audio: Connecting MIDI interface to setBfree..."
+    echo "rpi-audio: Connecting MIDI interface to setBfree..."
     midi=$(aconnect -i | grep client | grep -i "USB MS1x1" | cut -d " " -f2 | tr -d ":")
-    logger "rpi-audio: midi: $midi"
+    echo "rpi-audio: midi: $midi"
+    nk=$(aconnect -i | grep client | grep -i "nanoKONTROL" | cut -d " " -f2 | tr -d ":")
+    echo "rpi-audio: nanoKONTROL: $nk"
     setbfree=$(aconnect -o | grep client | grep -i "SETBFREE" | cut -d " " -f2 | tr -d ":")
-    logger "rpi-audio: setbfree: $setbfree"
-    logger "rpi-audio: connecting midi, $midi to setbfree: $setbfree"
-    aconnect $midi $setbfree
+    echo "rpi-audio: setbfree: $setbfree"
+    mididings=$(aconnect -i | grep client | grep -i "mididings" | cut -d " " -f2 | tr -d ":")
+
+    # echo "rpi-audio: connecting midi, $midi to setbfree: $setbfree"
+    # aconnect $midi $setbfree
+
+    # A little brittle, maybe. Assuming port numbers for mididings are always the same.
+    # 0: nanoKontrol IN
+    # 1: midiport IN
+    # 2: setBfree OUT
+    # 3: nanoKontrol OUT
+
+    # nanoKONTROL IN to mididings
+    echo "Connecting NanoKontrol, $nk:0 to Mididings, $mididings:0"
+    aconnect $nk:0 $mididings:0
+    # midi port IN to mididings
+    echo "Connecting Midi Port, $midi:0 to Mididings, $mididings:1"
+    aconnect $midi:0 $mididings:1
+    # mididings OUT to setBfree
+    echo "Connecting Mididings, $mididings:2 to setBfree, $setbfree:0"
+    aconnect $mididings:2 $setbfree:0
+    # mididings OUT to nanoKONTROL
+    echo "Connecting Mididings, $mididings:3 to nanoKontrol, $nk:0"
+    aconnect $mididings:3 $nk:0
 }
 
 # Handling for start/stop args
 case "$1" in
   start)
-    logger "rpi-audio: starting..." 
+    echo "rpi-audio: starting..." 
     # run application you want to start
     prep_system
     start_jack
     sleep 3
     start_setbfree
     sleep 3
+    start_mididings
+    sleep 7
     connect_midi
     ;;
   stop)
-    logger "rpi-audio: stopping..."
+    echo "rpi-audio: stopping..."
     killall setBfree
     killall jackd
+    killall python  # << a little aggressive
     ;;
   clear)
     if [ -f /home/pi/setbfree.log ]; then
