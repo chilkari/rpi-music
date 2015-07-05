@@ -51,6 +51,15 @@ start_sooperlooper() {
     fi
 }
 
+start_mididings() {
+    RUNNING=`pgrep looper-mididing`
+    if [ "${#RUNNING}" -gt 0 ] ; then
+        echo "mididings already running."
+    else
+        /home/pi/rpi-music/looper/looper-mididings.py &
+    fi
+}
+
 connect_jack() {
     echo "Connecting sooper loop to jack..."
     jack_connect sooperlooper:common_out_1 system:playback_1
@@ -66,9 +75,16 @@ connect_midi() {
     echo "rpi-audio: NanoKontrol2: $nk"
     sooperlooper=$(aconnect -o | grep client | grep -i "sooperlooper" | cut -d " " -f2 | tr -d ":")
     echo "rpi-audio: sooperlooper: $sooperlooper"
+    mididings=$(aconnect -o | grep client | grep -i "mididings" | cut -d " " -f2 | tr -d ":")
+    echo "rpi-audio: mididings: $mididings"
 
-    echo "rpi-audio: connecting nk2, $nk to sooperlooper: $sooperlooper"
-    aconnect $nk $sooperlooper
+    # mididings are always: 0: NK_IN, 1: SL, 2: NK_OUT
+    echo "rpi-audio: connecting NanoKontrol2, $nk to mididings: $mididings"
+    aconnect $nk:0 $mididings:0
+    echo "rpi-audio: connecting mididings:1, $mididings to sooperlooper: $sooperlooper"
+    aconnect $mididings:1 $sooperlooper:0
+    echo "rpi-audio: connecting mididings:2, $mididings to nanokontrol: $nk"
+    aconnect $mididings:2 $nk:0
 }
 
 # Handling for start/stop args
@@ -80,6 +96,8 @@ case "$1" in
     sleep 3
     start_sooperlooper
     sleep 3
+    start_mididings
+    sleep 7
     connect_jack
     sleep 2
     connect_midi
@@ -87,6 +105,7 @@ case "$1" in
   stop)
     echo "rpi-audio: stopping..."
     killall sooperlooper
+    kill `pgrep looper-mididing`
     killall jackd
     ;;
   clear)

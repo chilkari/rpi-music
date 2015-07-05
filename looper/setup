@@ -20,6 +20,14 @@ else
     sudo apt-get install -y sooperlooper
 fi
 
+# MidiDings
+if [ -f /usr/bin/mididings ];
+then
+    echo "mididings already installed."
+else
+    sudo apt-get install -y mididings
+fi
+
 
 # Need to modify some real-time audio settings.
 # Note - rtprio should end up being 84 (not 99).
@@ -51,7 +59,7 @@ if grep -q "rpi-audio" /home/pi/.profile; then
     echo ".profile already includes rpi-audio launcher"
 else
     echo "Adding rpi-audio launcher to tail of ~/.profile..."
-    echo "/home/pi/rpi-music/looper/rpi-audio start >> /home/pi/rpi-music/organ/rpi-audio.log 2>&1 &" >> /home/pi/.profile
+    echo "/home/pi/rpi-music/looper/rpi-audio start >> /home/pi/rpi-music/looper/rpi-audio.log 2>&1 &" >> /home/pi/.profile
 fi
 
 echo "rpi-audio setup complete."
