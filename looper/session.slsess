@@ -25,9 +25,9 @@
         <Control name="fade_samples" value="64"/>
         <Control name="playback_sync" value="0"/>
         <Control name="use_safety_feedback" value="1"/>
-        <Control name="input_latency" value="0"/>
-        <Control name="output_latency" value="0"/>
-        <Control name="trigger_latency" value="0"/>
+        <Control name="input_latency" value="1800"/>
+        <Control name="output_latency" value="7200"/>
+        <Control name="trigger_latency" value="1800"/>
         <Control name="mute_quantized" value="0"/>
         <Control name="overdub_quantized" value="1"/>
         <Control name="round_integer_tempo" value="0"/>
@@ -54,11 +54,11 @@
         <Control name="sync" value="1"/>
         <Control name="use_rate" value="0"/>
         <Control name="fade_samples" value="64"/>
-        <Control name="playback_sync" value="1"/>
+        <Control name="playback_sync" value="0"/>
         <Control name="use_safety_feedback" value="1"/>
-        <Control name="input_latency" value="0"/>
-        <Control name="output_latency" value="-2048"/>
-        <Control name="trigger_latency" value="0"/>
+        <Control name="input_latency" value="1800"/>
+        <Control name="output_latency" value="7200"/>
+        <Control name="trigger_latency" value="1800"/>
         <Control name="mute_quantized" value="0"/>
         <Control name="overdub_quantized" value="1"/>
         <Control name="round_integer_tempo" value="0"/>
@@ -85,11 +85,11 @@
         <Control name="sync" value="1"/>
         <Control name="use_rate" value="0"/>
         <Control name="fade_samples" value="64"/>
-        <Control name="playback_sync" value="1"/>
+        <Control name="playback_sync" value="0"/>
         <Control name="use_safety_feedback" value="1"/>
-        <Control name="input_latency" value="0"/>
-        <Control name="output_latency" value="0"/>
-        <Control name="trigger_latency" value="0"/>
+        <Control name="input_latency" value="1800"/>
+        <Control name="output_latency" value="7200"/>
+        <Control name="trigger_latency" value="1800"/>
         <Control name="mute_quantized" value="0"/>
         <Control name="overdub_quantized" value="1"/>
         <Control name="round_integer_tempo" value="0"/>
@@ -116,11 +116,11 @@
         <Control name="sync" value="1"/>
         <Control name="use_rate" value="0"/>
         <Control name="fade_samples" value="64"/>
-        <Control name="playback_sync" value="1"/>
+        <Control name="playback_sync" value="0"/>
         <Control name="use_safety_feedback" value="1"/>
-        <Control name="input_latency" value="0"/>
-        <Control name="output_latency" value="0"/>
-        <Control name="trigger_latency" value="0"/>
+        <Control name="input_latency" value="1800"/>
+        <Control name="output_latency" value="7200"/>
+        <Control name="trigger_latency" value="1800"/>
         <Control name="mute_quantized" value="0"/>
         <Control name="overdub_quantized" value="1"/>
         <Control name="round_integer_tempo" value="0"/>

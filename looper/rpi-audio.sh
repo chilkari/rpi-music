@@ -36,7 +36,7 @@ start_jack() {
     else
         export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket
         #sudo -u pi jackd -P84 -p32 -t2000 -d alsa -dhw:Device -p 2048 -r 44100 -s -D -znone >> /home/pi/jack.log 2>&1 &
-        sudo -u pi jackd -P84 -p32 -t2000 -d alsa -dhw:1 -p 512 -n 3 -r 44100 -s -D -znone >> /home/pi/jack.log 2>&1 &
+        sudo -u pi jackd -P84 -p32 -t2000 -d alsa -dhw:1 -p 2048 -n 4 -r 44100 -s -D -znone >> /home/pi/jack.log 2>&1 &
     fi
 }
 
@@ -77,11 +77,11 @@ case "$1" in
     echo "rpi-audio: starting..." 
     prep_system
     start_jack
-    sleep 4
-    start_sooperlooper
-    sleep 4
-    connect_jack
     sleep 3
+    start_sooperlooper
+    sleep 3
+    connect_jack
+    sleep 2
     connect_midi
     ;;
   stop)
