@@ -1,11 +1,17 @@
 #!/bin/sh
 
+sfile="/home/pi/rpi-music/shutdown_request"
+# Upon booting, we don't immediately want to honor a shutdown request
+if  [ -f $sfile ];
+then
+    rm $sfile
+fi
+
 while true
 do
-sfile="/home/pi/rpi-music/shutdown_request"
 if [ -f $sfile ];
 then
-   echo "Shutdown requests exists. Shutting down!"
+   rm $sfile
    /home/pi/rpi-audio/looper/rpi-audio stop
    sudo shutdown -h now
 fi
