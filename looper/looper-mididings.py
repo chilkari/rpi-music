@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import os
 from mididings import *
 from mididings.extra import *
 
@@ -54,7 +55,16 @@ def part_of_shutdown(ev):
         if ev.note == 31:
             shutdown_s = True
         if shutdown_r and shutdown_m and shutdown_s:
-            print "ALL THREE DOWN! Would invoke audio/system shutdown here"
+	    # TODO/FIXME - blink transport lights indicating shutdown
+            # Ideally, rpi-audio stop will turn off 'power' light when done stopping
+            # This won't work. I'm thinking I'll need to have a script running as root
+            # which looks for the presence of some sort of 'shutdown request' file. If
+            # it sees it (checks every 5-10 seconds or something), it deletes the file
+            # then shuts down. I would write that file here.
+            # Better approach if its running: use dbus to communicate from here to
+            # the running-as-root shutdown script.
+            print "SHUTDOWN REQUESTED. TODO - implement me."
+            
     if ev.type == NOTEOFF:
         if ev.note == 47:
             shutdown_r = False
