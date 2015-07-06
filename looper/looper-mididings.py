@@ -55,7 +55,7 @@ def part_of_shutdown(ev):
         if ev.note == 31:
             shutdown_s = True
         if shutdown_r and shutdown_m and shutdown_s:
-	    # TODO/FIXME - blink transport lights indicating shutdown
+            # TODO/FIXME - blink transport lights indicating shutdown
             # Ideally, rpi-audio stop will turn off 'power' light when done stopping
             # This won't work. I'm thinking I'll need to have a script running as root
             # which looks for the presence of some sort of 'shutdown request' file. If
@@ -64,7 +64,7 @@ def part_of_shutdown(ev):
             # Better approach if its running: use dbus to communicate from here to
             # the running-as-root shutdown script.
             print "SHUTDOWN REQUESTED. TODO - implement me."
-            
+
     if ev.type == NOTEOFF:
         if ev.note == 47:
             shutdown_r = False
