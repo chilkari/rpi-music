@@ -38,23 +38,27 @@ post = Print('output', portnames='out')
 # To request a shutdown, user must hold all three of the
 # 8th track's record, mute and solo buttons down. These
 # flags store each state
-shutdown_r = False
-shutdown_m = False
-shutdown_s = False
+shutdown_a = False
+shutdown_b = False
+shutdown_c = False
+shutdown_d = False
 
 def part_of_shutdown(ev):
     print "part_of_shutdown"
-    global shutdown_r
-    global shutdown_m
-    global shutdown_s
+    global shutdown_a
+    global shutdown_b
+    global shutdown_c
+    global shutdown_d
     if ev.type == NOTEON:
-        if ev.note == 47:
-            shutdown_r = True
-        if ev.note == 39:
-            shutdown_m = True
-        if ev.note == 31:
-            shutdown_s = True
-        if shutdown_r and shutdown_m and shutdown_s:
+        if ev.note == 0:
+            shutdown_a = True
+        if ev.note == 6:
+            shutdown_b = True
+        if ev.note == 7:
+            shutdown_c = True
+        if ev.note == 8:
+            shutdown_d = True
+        if shutdown_a and shutdown_b and shutdown_c and shutdown_d:
             # TODO/FIXME - blink transport lights indicating shutdown
             # Ideally, rpi-audio stop will turn off 'power' light when done stopping
             # This won't work. I'm thinking I'll need to have a script running as root
@@ -64,20 +68,24 @@ def part_of_shutdown(ev):
             # Better approach if its running: use dbus to communicate from here to
             # the running-as-root shutdown script.
             print "SHUTDOWN REQUESTED. TODO - implement me."
+            with open('/home/pi/rpi-music/shutdown_request', 'w') as f:
+                f.write('shutdown, please!')
 
     if ev.type == NOTEOFF:
-        if ev.note == 47:
-            shutdown_r = False
-        if ev.note == 39:
-            shutdown_m = False
-        if ev.note == 31:
-            shutdown_s = False
+        if ev.note == 0:
+            shutdown_a = False
+        if ev.note == 6:
+            shutdown_b = False
+        if ev.note == 7:
+            shutdown_c = False
+        if ev.note == 8:
+            shutdown_d = False
 
 
 scenes = {
     1: Scene("looper", [
         Channel(13) >> Port('NK2_OUT'),
-        KeyFilter(notes=[47,39,31]) >> Process(part_of_shutdown),
+        KeyFilter(notes=[0,6,7,8]) >> Process(part_of_shutdown),
         Filter(NOTE) >> Port('SL'),
     ])
 }
