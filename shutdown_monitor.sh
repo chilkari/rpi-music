@@ -8,6 +8,7 @@ then
    echo "Shutdown requests exists. Shutting down!"
    /home/pi/rpi-audio/looper/rpi-audio stop
    sudo shutdown -h now
+fi
 sleep 5
 done
 
