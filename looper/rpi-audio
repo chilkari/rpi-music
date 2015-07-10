@@ -10,6 +10,15 @@
 # Description:       Script to start/stop jackd and audio software
 ### END INIT INFO
 
+# FIXME - We set this up to run from ~/.profile, which means it tries to
+# run on any login. SSH'ing in will run it again (in addition to the one
+# that runs on boot/auto-login). Modify this script so that if there
+# is already a process, then bail out early.
+# For this script, it's not too bad because it just runs, launching
+# things, only if they're not already running. We could leave it that way
+# and harden it up so that you can absolutely run it repeatedly and the
+# later runs have no impact.
+
 prep_system() {
     # Shutdown unneeded things.
     echo "rpi-audio: Stopping unnecessary services..."
@@ -45,8 +54,10 @@ start_jack() {
         echo "JackD already running."
     else
         export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket
-        #sudo -u pi jackd -P84 -p32 -t2000 -d alsa -dhw:Device -p 2048 -r 44100 -s -D -znone >> /home/pi/jack.log 2>&1 &
-        sudo -u pi jackd -P84 -p32 -t2000 -d alsa -dhw:1 -p 2048 -n 4 -r 44100 -s -D -znone >> /home/pi/jack.log 2>&1 &
+        # See available devices with "cat /proc/asound/cards"
+        # Can use name or number at far left after the -dhw:
+        sudo -u pi jackd -P84 -p32 -t2000 -d alsa -dhw:Device -p 4096 -r 44100 -s -D -znone >> /home/pi/jack.log 2>&1 &
+        # sudo -u pi jackd -R -P84 -p3 -t2000 -M 128 -d alsa -dhw:Device -n 3 -p 64 -r 44100 -s -D -znone -X raw -i 1 -o 2 >> /home/pi/jack.log 2>&1 &
     fi
 }
 
@@ -101,22 +112,36 @@ connect_midi() {
 case "$1" in
   start)
     echo "rpi-audio: starting..." 
+    /home/pi/rpi-music/looper/announce.py rew_on
     prep_system
+
+    /home/pi/rpi-music/looper/announce.py fwd_on
     start_jack
     sleep 3
+
+    /home/pi/rpi-music/looper/announce.py stop_on
     start_sooperlooper
     sleep 3
+
+    /home/pi/rpi-music/looper/announce.py play_on
     start_mididings
     sleep 7
+
+    /home/pi/rpi-music/looper/announce.py rec_on
     connect_jack
     sleep 2
+
+    /home/pi/rpi-music/looper/announce.py clear
     connect_midi
+
+    /home/pi/rpi-music/looper/announce.py spiral
     ;;
   stop)
     echo "rpi-audio: stopping..."
     killall sooperlooper
     kill `pgrep looper-mididing`
     killall jackd
+    /home/pi/rpi-music/looper/announce.py shutdown
     ;;
   clear)
     if [ -f /home/pi/sooperlooper.log ]; then
