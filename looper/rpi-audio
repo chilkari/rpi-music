@@ -22,19 +22,65 @@
 prep_system() {
     # Shutdown unneeded things.
     echo "rpi-audio: Stopping unnecessary services..."
-    sudo service ntp stop 2>&1 &
-    sudo service triggerhappy stop 2>&1 &
-    #sudo service dbus stop 2>&1 &
-    #sudo killall console-kit-daemon 2>&1 &  (doesn't exist)
-    #sudo killall pokitd 2>&1 & (doesn't exist)
+    RUNNING=`pgrep ntp`
+    if [ "${#RUNNING}" -gt 0 ] ; then
+        echo "NTP running. Stopping..."
+        sudo service ntp stop 2>&1 &
+    fi
+	
+	export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket
+
+    RUNNING=`pgrep triggerhappy`
+    if [ "${#RUNNING}" -gt 0 ] ; then
+        echo "TriggerHappy running. Stopping..."
+        sudo service triggerhappy stop 2>&1 &
+    fi
+    RUNNING=`pgrep console-kit-daemon`
+    if [ "${#RUNNING}" -gt 0 ] ; then
+        echo "console-kit-daemon running. Stopping..."
+        sudo killall console-kit-daemon 2>&1 &
+    fi
+    RUNNING=`pgrep dbus`
+    if [ "${#RUNNING}" -gt 0 ] ; then
+        echo "dbus running. Stopping..."
+        sudo service dbus stop 2>&1 &
+    fi
+    RUNNING=`pgrep dbus-daemon`
+    if [ "${#RUNNING}" -gt 0 ] ; then
+        echo "dbus-daemon running. Stopping..."
+        sudo killall dbus-daemon 2>&1 &
+    fi
+    RUNNING=`pgrep dbus-launch`
+    if [ "${#RUNNING}" -gt 0 ] ; then
+        echo "dbus-launch running. Stopping..."
+        sudo killall dbus-launch 2>&1 &
+    fi
+    RUNNING=`pgrep polkitd`
+    if [ "${#RUNNING}" -gt 0 ] ; then
+        echo "polkitd running. Stopping..."
+        sudo killall polkitd 2>&1 &
+    fi
+    RUNNING=`pgrep gvfsd`
+    if [ "${#RUNNING}" -gt 0 ] ; then
+        echo "gvfsd running. Stopping..."
+        sudo killall gvfsd  2>&1 &
+    fi
     
     sudo mount -o remount,size=128M /dev/shm
-    sudo killall gvfsd 2>&1 &
-    #sudo killall dbus-daemon 2>&1 &
-    #sudo killall dbus-launch 2>&1 &
     
     echo "rpi-audio: Setting CPU governor to performance..."
+    # RPI 1
     echo -n performance | sudo tee /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+    # RPI 2
+    # for cpu in /sys/devices/system/cpu/cpu[0-9]*; do echo -n performance | sudo tee $cpu/cpufreq/scaling_governor; done
+
+    # Ensure that we force USB mode and disable turbo on the ethernet controller
+    if grep -q "dwc_otg.speed=1 smsc95xx.turbo_mode=N" /boot/cmdline.txt; then
+        echo "/boot/cmdline.txt already modified for USB1.1+noEthernetTurbo"
+    else
+        sudo cp /boot/cmdline.txt /boot/cmdline.bak
+        sudo sed -i '1s/^/dwc_otg.speed=1 smsc95xx.turbo_mode=N /' /boot/cmdline.txt
+    fi
 
     local SHUTDOWN_FILE="/home/pi/rpi-music/shutdown_request"
     if [ -f $SHUTDOWN_FILE ];
