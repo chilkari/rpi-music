@@ -181,6 +181,7 @@ case "$1" in
     connect_midi
 
     /home/pi/rpi-music/looper/announce.py spiral
+    /home/pi/rpi-music/looper/announce.py cycle_on
     ;;
   stop)
     echo "rpi-audio: stopping..."
@@ -206,6 +207,7 @@ case "$1" in
         echo "jackd not running."
     fi
     /home/pi/rpi-music/looper/announce.py shutdown
+    /home/pi/rpi-music/looper/announce.py clear
     ;;
   clear)
     if [ -f /home/pi/sooperlooper.log ]; then

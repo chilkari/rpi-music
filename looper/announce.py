@@ -34,6 +34,11 @@ class Announcer(object):
         for i in range(11):
             self.mo.send_message([0x8C, i, 127])
 
+    def cycle_on(self):
+        self.mo.send_message([0x9C, 0, 127])
+
+    def cycle_off(self):
+        self.mo.send_message([0x8C, 0, 127])
     
     def rew_on(self):
         self.mo.send_message([0x9C, 1, 127])
