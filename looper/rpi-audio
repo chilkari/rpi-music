@@ -184,9 +184,27 @@ case "$1" in
     ;;
   stop)
     echo "rpi-audio: stopping..."
-    killall sooperlooper
-    kill `pgrep looper-mididing`
-    killall jackd
+    RUNNING=`pgrep sooperlooper`
+    if [ "${#RUNNING}" -gt 0 ] ; then
+        echo "Stopping sooperlooper..."
+        sudo killall sooperlooper 2>&1
+    else
+        echo "sooperlooper not running."
+    fi
+    RUNNING=`pgrep looper-mididing`
+    if [ "${#RUNNING}" -gt 0 ] ; then
+        echo "Stopping mididings..."
+        sudo kill $RUNNING 2>&1
+    else
+        echo "mididings not running."
+    fi
+    RUNNING=`pgrep jackd`
+    if [ "${#RUNNING}" -gt 0 ] ; then
+        echo "Stopping jackd..."
+        sudo killall jackd 2>&1
+    else
+        echo "jackd not running."
+    fi
     /home/pi/rpi-music/looper/announce.py shutdown
     ;;
   clear)

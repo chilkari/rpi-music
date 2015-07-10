@@ -59,7 +59,7 @@ class Announcer(object):
             self.mo.send_message([0x8C, 47-step, 127])
             self.mo.send_message([0x8C, 39-step, 127])
             self.mo.send_message([0x8C, 31-step, 127])
-            sleep(0.3)
+            sleep(0.1)
             step += 1
 
     
