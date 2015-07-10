@@ -1,10 +1,17 @@
 #!/bin/sh
 
-# FIXME - We set this up to run from ~/.profile, which means it tries to
-# run on any login. SSH'ing in will run it again (in addition to the one
-# that runs on boot/auto-login). Modify this script so that if there
-# is already a process, then bail out early.
-# We should be able to simply grep the process table for shutdown_monitor
+# This file is simply watching for the presence of a shutdown_request file
+# which is typically put there by a mididings process, in response to some
+# controller pushes. If this monitor sees that file, it stops the audio
+# and shutdown down the RPi.
+
+# First, see if shutdown_monitor is already running. (This happens if you
+# boot the RPi, then login from a console, which tries to run it again)
+RUNNING=`ps -ef | sed -n /sudo.*[s]hutdown_monitor.sh/p`
+if [ "${RUNNING:-null}" != null ]; then
+    echo "Shutdown monitor already running. Aborting..."
+    exit 1
+fi
 
 sfile="/home/pi/rpi-music/shutdown_request"
 # Upon booting, we don't immediately want to honor a shutdown request
