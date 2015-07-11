@@ -58,4 +58,6 @@ And reboot (sudo reboot)
 
 ### Setting Up a usable RPI Machine
 
-For now, I've only got one 'machine' currently called 'organ' but I hope to have a number of different flavors of RPI Audio boxes (which is why the current stuff is all under an 'organ' directory). To setup your machine, you should be able to simply cd into the organ directory, and run ./setup -- which should do everything needed to get a bootable RPI machine without requiring any other steps. If all goes well, after setup completes, you should be able to reboot and without even logging in, start playing some music.
+TBD - modify for top-level scripts with start/stop/clear looper/sampler/organ...
+Mention setting of RPI1 env variable in rpi-audio if necessary
+
