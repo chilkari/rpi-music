@@ -1,23 +1,8 @@
 #!/bin/sh
 
-### BEGIN INIT INFO
-# Provides:          rpi-audio
-# Required-Start:    $all
-# Required-Stop:     $all
-# Default-Start:     2 3 4 5
-# Default-Stop:      0 1 6
-# Short-Description: Script to start/stop jackd and audio software
-# Description:       Script to start/stop jackd and audio software
-### END INIT INFO
+# If you're using a first generation RPI (A/B/B+), uncomment the following:
+RPI1=1
 
-# FIXME - We set this up to run from ~/.profile, which means it tries to
-# run on any login. SSH'ing in will run it again (in addition to the one
-# that runs on boot/auto-login). Modify this script so that if there
-# is already a process, then bail out early.
-# For this script, it's not too bad because it just runs, launching
-# things, only if they're not already running. We could leave it that way
-# and harden it up so that you can absolutely run it repeatedly and the
-# later runs have no impact.
 
 prep_system() {
     # Shutdown unneeded things.
@@ -69,10 +54,16 @@ prep_system() {
     sudo mount -o remount,size=128M /dev/shm
     
     echo "rpi-audio: Setting CPU governor to performance..."
-    # RPI 1
-    echo -n performance | sudo tee /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
-    # RPI 2
-    # for cpu in /sys/devices/system/cpu/cpu[0-9]*; do echo -n performance | sudo tee $cpu/cpufreq/scaling_governor; done
+    if [ "${RPI1:-null}" != null ]; then
+        # RPI1 env is set - trigger that way
+        echo "... RPI 1 mode"
+        echo -n performance | sudo tee /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+    else
+        # No RPI1 - assume RPI2
+        for cpu in /sys/devices/system/cpu/cpu[0-9]*; 
+            do echo -n performance | sudo tee $cpu/cpufreq/scaling_governor; 
+        done
+    fi
 
     # Ensure that we force USB mode and disable turbo on the ethernet controller
     if grep -q "dwc_otg.speed=1 smsc95xx.turbo_mode=N" /boot/cmdline.txt; then
@@ -93,7 +84,10 @@ prep_system() {
 
 }
 
-start_jack() {
+
+# Looper Functions
+
+start_jack_looper() {
     echo "rpi-audio: starting JackD..."
     RUNNING=`pgrep jackd`
     if [ "${#RUNNING}" -gt 0 ] ; then
@@ -118,7 +112,7 @@ start_sooperlooper() {
     fi
 }
 
-start_mididings() {
+start_mididings_looper() {
     RUNNING=`pgrep looper-mididing`
     if [ "${#RUNNING}" -gt 0 ] ; then
         echo "mididings already running."
@@ -127,7 +121,7 @@ start_mididings() {
     fi
 }
 
-connect_jack() {
+connect_jack_looper() {
     echo "Connecting sooper loop to jack..."
     jack_connect sooperlooper:common_out_1 system:playback_1
     jack_connect sooperlooper:common_out_2 system:playback_2
@@ -135,7 +129,7 @@ connect_jack() {
     jack_connect system:capture_1 sooperlooper:common_in_2
 }
 
-connect_midi() {
+connect_midi_looper() {
     # Connect SooperLooper to NanoKontrol2 interface:
     echo "rpi-audio: Connecting NanoKontrol2 interface to SooperLooper..."
     nk=$(aconnect -i | grep client | grep -i "nanoKONTROL2" | cut -d " " -f2 | tr -d ":")
@@ -157,70 +151,97 @@ connect_midi() {
 # Handling for start/stop args
 case "$1" in
   start)
-    echo "rpi-audio: starting..." 
-    /home/pi/rpi-music/looper/announce.py rew_on
-    prep_system
 
-    /home/pi/rpi-music/looper/announce.py fwd_on
-    start_jack
-    sleep 3
+      case "$2" in
 
-    /home/pi/rpi-music/looper/announce.py stop_on
-    start_sooperlooper
-    sleep 3
+        looper)
 
-    /home/pi/rpi-music/looper/announce.py play_on
-    start_mididings
-    sleep 7
+          echo "rpi-audio: starting..." 
+          /home/pi/rpi-music/looper/announce.py rew_on
+          prep_system
 
-    /home/pi/rpi-music/looper/announce.py rec_on
-    connect_jack
-    sleep 2
+          /home/pi/rpi-music/looper/announce.py fwd_on
+          start_jack_looper
+          sleep 3
 
-    /home/pi/rpi-music/looper/announce.py clear
-    connect_midi
+          /home/pi/rpi-music/looper/announce.py stop_on
+          start_sooperlooper
+          sleep 3
 
-    /home/pi/rpi-music/looper/announce.py spiral
-    /home/pi/rpi-music/looper/announce.py cycle_on
+          /home/pi/rpi-music/looper/announce.py play_on
+          start_mididings_looper
+          sleep 7
+
+          /home/pi/rpi-music/looper/announce.py rec_on
+          connect_jack_looper
+          sleep 2
+
+          /home/pi/rpi-music/looper/announce.py clear
+          connect_midi_looper
+
+          /home/pi/rpi-music/looper/announce.py spiral
+          /home/pi/rpi-music/looper/announce.py cycle_on
+       ;;
+
+       *)
+         echo "Unrecognized machine type. {looper|sampler|organ}"
+       ;;
+
+    esac
     ;;
+            
   stop)
-    echo "rpi-audio: stopping..."
-    RUNNING=`pgrep sooperlooper`
-    if [ "${#RUNNING}" -gt 0 ] ; then
-        echo "Stopping sooperlooper..."
-        sudo killall sooperlooper 2>&1
-    else
-        echo "sooperlooper not running."
-    fi
-    RUNNING=`pgrep looper-mididing`
-    if [ "${#RUNNING}" -gt 0 ] ; then
-        echo "Stopping mididings..."
-        sudo kill $RUNNING 2>&1
-    else
-        echo "mididings not running."
-    fi
-    RUNNING=`pgrep jackd`
-    if [ "${#RUNNING}" -gt 0 ] ; then
-        echo "Stopping jackd..."
-        sudo killall jackd 2>&1
-    else
-        echo "jackd not running."
-    fi
-    /home/pi/rpi-music/looper/announce.py shutdown
-    /home/pi/rpi-music/looper/announce.py clear
+
+      case "$2" in
+
+        looper)
+
+            echo "rpi-audio: stopping..."
+            RUNNING=`pgrep sooperlooper`
+            if [ "${#RUNNING}" -gt 0 ] ; then
+                echo "Stopping sooperlooper..."
+                sudo killall sooperlooper 2>&1
+            else
+                echo "sooperlooper not running."
+            fi
+            RUNNING=`pgrep looper-mididing`
+            if [ "${#RUNNING}" -gt 0 ] ; then
+                echo "Stopping mididings..."
+                sudo kill $RUNNING 2>&1
+            else
+                echo "mididings not running."
+            fi
+            RUNNING=`pgrep jackd`
+            if [ "${#RUNNING}" -gt 0 ] ; then
+                echo "Stopping jackd..."
+                sudo killall jackd 2>&1
+            else
+                echo "jackd not running."
+            fi
+            /home/pi/rpi-music/looper/announce.py shutdown
+            /home/pi/rpi-music/looper/announce.py clear
+        ;;
+
+        *)
+            echo "Unrecognized machine type. {looper|sampler|organ}"
+        ;;
+    esac
     ;;
+
   clear)
+
     if [ -f /home/pi/sooperlooper.log ]; then
         sudo rm /home/pi/sooperlooper.log
     fi
     if [ -f /home/pi/jack.log ]; then
         sudo rm /home/pi/jack.log
     fi
-    ;;
+  ;;
+
   *)
-    echo "Usage: /etc/init.d/rpi-audio {start|stop|clear}"
+    echo "Usage: /etc/init.d/rpi-audio {start|stop|clear} {looper|sampler|organ}"
     exit 1
-    ;;
+  ;;
 esac
 
 exit 0

@@ -1,0 +1,122 @@
+#!/bin/sh
+
+# Machine Setup. Note - as of now, this install everything needed
+# for any machine type. If space constraints are a consideration, it
+# may be useful to modify this file to use environment variables or
+# args to only install resources for one specific machine.
+
+# Basic setup ------------------------
+
+# Add Autostatic PPA, and update, if necessary
+if [ -f /etc/apt/sources.list.d/autostatic-audio-raspbian.list ];
+then
+    echo "autostatic PPA already here. Not adding...";
+else
+    wget -q -O - http://rpi.autostatic.com/autostatic.gpg.key | sudo apt-key add -
+    sudo wget -q -O /etc/apt/sources.list.d/autostatic-audio-raspbian.list http://rpi.autostatic.com/autostatic-audio-raspbian.list
+    sudo apt-get update
+fi
+
+# Need to modify some real-time audio settings.
+# Note - rtprio should end up being 84 (not 99).
+# TODO - might have to patch /etc/security/limits.d/audio.conf
+# "-p critical" is my attempt at silent execution that won't 
+# wait for user prompt.
+if [ -f /etc/security/limits.d/audio.conf ]; then
+    echo "Real-time audio already enabled."
+else
+    sudo dpkg-reconfigure -p critical jackd1
+    # Add pi user to audio group:
+    sudo usermod -a -G audio pi
+fi
+
+# Install Needed Software ---------------------------------
+
+# MidiDings
+if [ -f /usr/bin/mididings ];
+then
+    echo "mididings already installed."
+else
+    sudo apt-get install -y mididings
+fi
+
+# SooperLooper
+if [ -f /usr/bin/sooperlooper ];
+then
+    echo "SooperLooper already installed."
+else
+    sudo apt-get install -y sooperlooper
+fi
+
+# LinuxSampler
+if [ -f /usr/bin/linuxsampler ];
+then
+    echo "LinuxSampler already installed."
+else
+    sudo apt-get install -y linuxsampler
+fi
+
+# MidiMan 1x1 interface support
+if [ -f /etc/udev/rules.d/99-midisport-firmware.rules ];
+then
+    echo "MidiMan 1x1 support already in place."
+else
+    sudo apt-get install -y midisport-firmware
+    sudo cp midiman.conf /etc/udev/rules.d/99-midisport-firmware.rules
+fi
+
+# SetBFree
+if [ -f /usr/bin/setBfree ];
+then
+    echo "setBfree already installed."
+else
+    # Dependencies for setBfree
+    sudo apt-get install -y libjack-dev libasound2 libasound2-dev libsndfile1 libsndfile1-dev libftgl-dev libglu1-mesa-dev ttf-bitstream-vera lv2-dev libzita-convolver-dev liblo-dev
+    
+    # Now, install from a deb file I have in S3. I'm not seeing this in normal
+    # raspbian repos, but it seems to sort of be in the ubuntu launchpad for arm.
+    # TODO - sort this out so I have the latest version...
+    
+    wget https://s3-us-west-2.amazonaws.com/chilkari-raspberry-pi-music/setbfree_0.7.5-1_armhf.debsudo dpkg -i setbfree_0.7.5-1_armhf.deb
+    # Ensure we have deps:
+    sudo apt-get install -f
+    # Remove unneeded packages
+    sudo apt-get autoremove
+    # Remove the downloaded setbfree deb file:
+    rm setbfree_0.7.5-1_armhf.deb
+fi
+
+
+
+# Configuration for auto-login and auto-run
+
+# Configure the RPI to auto-login as "pi" and then add the audio
+# launcher script (rpi-audio) to the pi user's ~/.profile.
+
+# inittab for auto-login
+if grep -q "1:2345:respawn:/bin/login" /etc/inittab; then
+    echo "/etc/inittab already modified for auto-login"
+else
+    sudo cp /etc/inittab /etc/inittab.bak
+    sudo sed 's/1:2345:respawn:\/sbin\/getty.*$/1:2345:respawn:\/bin\/login -f pi tty1 <\/dev\/tty1 >\/dev\/tty1 2>\&1/' /etc/inittab | sudo tee /etc/inittab.new
+    sudo mv /etc/inittab.new /etc/inittab
+fi
+
+# modify .profile to include launcher
+if grep -q "rpi-audio" /home/pi/.profile; then
+    echo ".profile already includes rpi-audio launcher"
+else
+    echo "Adding rpi-audio launcher to tail of ~/.profile..."
+    echo "/home/pi/rpi-music/rpi-audio start >> /home/pi/rpi-music/rpi-audio.log 2>&1 &" >> /home/pi/.profile
+fi
+
+# modify .profile to include shutdown monitor
+if grep -q "shutdown_monitor" /home/pi/.profile; then
+    echo ".profile already includes shutdown monitor"
+else
+    echo "Adding shutdown_monitor.sh to tail of ~/.profile..."
+    echo "sudo /home/pi/rpi-music/shutdown_monitor.sh &" >> /home/pi/.profile
+fi
+
+echo "rpi-audio setup complete."
+
