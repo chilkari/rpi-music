@@ -5,6 +5,9 @@
 # controller pushes. If this monitor sees that file, it stops the audio
 # and shutdown down the RPi.
 
+# Define your machine type here {looper|sampler|organ}
+MACHINE_TYPE=looper
+
 # First, see if shutdown_monitor is already running. (This happens if you
 # boot the RPi, then login from a console, which tries to run it again)
 RUNNING=`ps -ef | sed -n /sudo.*[s]hutdown_monitor.sh/p`
@@ -25,7 +28,7 @@ do
 if [ -f $sfile ];
 then
    rm $sfile
-   /home/pi/rpi-audio/looper/rpi-audio stop
+   /home/pi/rpi-audio/looper/rpi-audio stop $MACHINE_TYPE
    sudo shutdown -h now
 fi
 sleep 5

@@ -1,9 +1,13 @@
 #!/bin/sh
 
-# Machine Setup. Note - as of now, this install everything needed
+# Machine Setup. Note - as of now, this installs everything needed
 # for any machine type. If space constraints are a consideration, it
 # may be useful to modify this file to use environment variables or
 # args to only install resources for one specific machine.
+
+# Modify the following to determine the type of machine you actually
+# want to run:   {looper|sampler|organ}
+MACHINE_TYPE=looper
 
 # Basic setup ------------------------
 
@@ -107,7 +111,7 @@ if grep -q "rpi-audio" /home/pi/.profile; then
     echo ".profile already includes rpi-audio launcher"
 else
     echo "Adding rpi-audio launcher to tail of ~/.profile..."
-    echo "/home/pi/rpi-music/rpi-audio start >> /home/pi/rpi-music/rpi-audio.log 2>&1 &" >> /home/pi/.profile
+    echo "/home/pi/rpi-music/rpi-audio start $MACHINE_TYPE >> /home/pi/rpi-music/rpi-audio.log 2>&1 &" >> /home/pi/.profile
 fi
 
 # modify .profile to include shutdown monitor

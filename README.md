@@ -58,6 +58,14 @@ And reboot (sudo reboot)
 
 ### Setting Up a usable RPI Machine
 
-TBD - modify for top-level scripts with start/stop/clear looper/sampler/organ...
-Mention setting of RPI1 env variable in rpi-audio if necessary
+Determine the type of machine you'd like {looper|sampler|organ} and set the MACHINE_TYPE variable in these files:
+
+shutdown_monitor.sh
+setup
+
+If you're using a first generation RPI, edit the rpi-audio script and uncomment the RPI1=1 line.
+
+The run setup.
+
+Reboot - and you should be up and running.
 

@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # If you're using a first generation RPI (A/B/B+), uncomment the following:
-RPI1=1
+# RPI1=1
 
 
 prep_system() {
@@ -13,7 +13,7 @@ prep_system() {
         sudo service ntp stop 2>&1 &
     fi
 	
-	export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket
+    export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket
 
     RUNNING=`pgrep triggerhappy`
     if [ "${#RUNNING}" -gt 0 ] ; then
@@ -52,7 +52,7 @@ prep_system() {
     fi
     
     sudo mount -o remount,size=128M /dev/shm
-    
+
     echo "rpi-audio: Setting CPU governor to performance..."
     if [ "${RPI1:-null}" != null ]; then
         # RPI1 env is set - trigger that way
@@ -61,7 +61,7 @@ prep_system() {
     else
         # No RPI1 - assume RPI2
         for cpu in /sys/devices/system/cpu/cpu[0-9]*; 
-            do echo -n performance | sudo tee $cpu/cpufreq/scaling_governor; 
+        do echo -n performance | sudo tee $cpu/cpufreq/scaling_governor; 
         done
     fi
 
@@ -76,10 +76,10 @@ prep_system() {
     local SHUTDOWN_FILE="/home/pi/rpi-music/shutdown_request"
     if [ -f $SHUTDOWN_FILE ];
     then
-       echo "File $SHUTDOWN_FILE exists. Removing..."
-       rm $SHUTDOWN_FILE
+        echo "File $SHUTDOWN_FILE exists. Removing..."
+        rm $SHUTDOWN_FILE
     else
-       echo "File $SHUTDOWN_FILE does not exist."
+        echo "File $SHUTDOWN_FILE does not exist."
     fi
 
 }
@@ -148,100 +148,104 @@ connect_midi_looper() {
     aconnect $mididings:2 $nk:0
 }
 
+start_looper() {
+    echo "rpi-audio: starting..." 
+    /home/pi/rpi-music/looper/announce.py rew_on
+    prep_system
+
+    /home/pi/rpi-music/looper/announce.py fwd_on
+    start_jack_looper
+    sleep 3
+
+    /home/pi/rpi-music/looper/announce.py stop_on
+    start_sooperlooper
+    sleep 3
+
+    /home/pi/rpi-music/looper/announce.py play_on
+    start_mididings_looper
+    sleep 7
+
+    /home/pi/rpi-music/looper/announce.py rec_on
+    connect_jack_looper
+    sleep 2
+
+    /home/pi/rpi-music/looper/announce.py clear
+    connect_midi_looper
+
+    /home/pi/rpi-music/looper/announce.py spiral
+    /home/pi/rpi-music/looper/announce.py cycle_on
+}
+
+stop_looper() {
+    echo "rpi-audio: stopping..."
+    RUNNING=`pgrep sooperlooper`
+    if [ "${#RUNNING}" -gt 0 ] ; then
+        echo "Stopping sooperlooper..."
+        sudo killall sooperlooper 2>&1
+    else
+        echo "sooperlooper not running."
+    fi
+    RUNNING=`pgrep looper-mididing`
+    if [ "${#RUNNING}" -gt 0 ] ; then
+        echo "Stopping mididings..."
+        sudo kill $RUNNING 2>&1
+    else
+        echo "mididings not running."
+    fi
+    RUNNING=`pgrep jackd`
+    if [ "${#RUNNING}" -gt 0 ] ; then
+        echo "Stopping jackd..."
+        sudo killall jackd 2>&1
+    else
+        echo "jackd not running."
+    fi
+    /home/pi/rpi-music/looper/announce.py shutdown
+    /home/pi/rpi-music/looper/announce.py clear
+}
+
 # Handling for start/stop args
 case "$1" in
-  start)
+    start)
 
-      case "$2" in
+        case "$2" in
 
-        looper)
+            looper)
+                 start_looper
+                 ;;
+            *)
+                 echo "Unrecognized machine type. {looper|sampler|organ}"
+                 ;;
 
-          echo "rpi-audio: starting..." 
-          /home/pi/rpi-music/looper/announce.py rew_on
-          prep_system
+         esac
+         ;;
 
-          /home/pi/rpi-music/looper/announce.py fwd_on
-          start_jack_looper
-          sleep 3
+     stop)
 
-          /home/pi/rpi-music/looper/announce.py stop_on
-          start_sooperlooper
-          sleep 3
+         case "$2" in
 
-          /home/pi/rpi-music/looper/announce.py play_on
-          start_mididings_looper
-          sleep 7
+             looper)
+                 stop_looper
+                 ;;
+             *)
+                 echo "Unrecognized machine type. {looper|sampler|organ}"
+                 ;;
+         esac
+         ;;
 
-          /home/pi/rpi-music/looper/announce.py rec_on
-          connect_jack_looper
-          sleep 2
+     clear)
 
-          /home/pi/rpi-music/looper/announce.py clear
-          connect_midi_looper
+         if [ -f /home/pi/sooperlooper.log ]; then
+             sudo rm /home/pi/sooperlooper.log
+         fi
+         if [ -f /home/pi/jack.log ]; then
+             sudo rm /home/pi/jack.log
+         fi
+         ;;
 
-          /home/pi/rpi-music/looper/announce.py spiral
-          /home/pi/rpi-music/looper/announce.py cycle_on
-       ;;
-
-       *)
-         echo "Unrecognized machine type. {looper|sampler|organ}"
-       ;;
-
-    esac
+    *)
+        echo "Usage: /etc/init.d/rpi-audio {start|stop|clear} {looper|sampler|organ}"
+        exit 1
     ;;
-            
-  stop)
-
-      case "$2" in
-
-        looper)
-
-            echo "rpi-audio: stopping..."
-            RUNNING=`pgrep sooperlooper`
-            if [ "${#RUNNING}" -gt 0 ] ; then
-                echo "Stopping sooperlooper..."
-                sudo killall sooperlooper 2>&1
-            else
-                echo "sooperlooper not running."
-            fi
-            RUNNING=`pgrep looper-mididing`
-            if [ "${#RUNNING}" -gt 0 ] ; then
-                echo "Stopping mididings..."
-                sudo kill $RUNNING 2>&1
-            else
-                echo "mididings not running."
-            fi
-            RUNNING=`pgrep jackd`
-            if [ "${#RUNNING}" -gt 0 ] ; then
-                echo "Stopping jackd..."
-                sudo killall jackd 2>&1
-            else
-                echo "jackd not running."
-            fi
-            /home/pi/rpi-music/looper/announce.py shutdown
-            /home/pi/rpi-music/looper/announce.py clear
-        ;;
-
-        *)
-            echo "Unrecognized machine type. {looper|sampler|organ}"
-        ;;
-    esac
-    ;;
-
-  clear)
-
-    if [ -f /home/pi/sooperlooper.log ]; then
-        sudo rm /home/pi/sooperlooper.log
-    fi
-    if [ -f /home/pi/jack.log ]; then
-        sudo rm /home/pi/jack.log
-    fi
-  ;;
-
-  *)
-    echo "Usage: /etc/init.d/rpi-audio {start|stop|clear} {looper|sampler|organ}"
-    exit 1
-  ;;
 esac
 
 exit 0
