@@ -81,15 +81,20 @@ else
     # raspbian repos, but it seems to sort of be in the ubuntu launchpad for arm.
     # TODO - sort this out so I have the latest version...
     
-    wget https://s3-us-west-2.amazonaws.com/chilkari-raspberry-pi-music/setbfree_0.7.5-1_armhf.debsudo dpkg -i setbfree_0.7.5-1_armhf.deb
+    wget https://s3-us-west-2.amazonaws.com/chilkari-raspberry-pi-music/setbfree_0.7.5-1_armhf.deb
+    sudo dpkg -i setbfree_0.7.5-1_armhf.deb
     # Ensure we have deps:
     sudo apt-get install -f
     # Remove unneeded packages
-    sudo apt-get autoremove
+    sudo apt-get autoremove -y
     # Remove the downloaded setbfree deb file:
     rm setbfree_0.7.5-1_armhf.deb
 fi
 
+# Python setup and install needed python modules
+sudo apt-get install -y python-dev python-setuptools librtmidi1 librtmidi-dev
+sudo easy_install pip
+sudo pip install rtmidi-python
 
 
 # Configuration for auto-login and auto-run
