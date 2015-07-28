@@ -16,8 +16,8 @@ config(
 )
 
 # Uncomment for logging of all events
-pre = Print('input', portnames='in')
-post = Print('output', portnames='out')
+# pre = Print('input', portnames='in')
+# post = Print('output', portnames='out')
 
 
 # READY function - show user that we're ready to go:
@@ -87,6 +87,7 @@ scenes = {
         Channel(13) >> Port('NK2_OUT'),
         KeyFilter(notes=[0,6,7,8]) >> Process(part_of_shutdown),
         Filter(NOTE) >> Port('SL'),
+        Filter(CTRL) >> Port('SL'),
     ])
 }
 

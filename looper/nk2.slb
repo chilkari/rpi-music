@@ -13,21 +13,37 @@
 12 n 25  note overdub 1  0 1  norm 0 127
 12 n 26  note overdub 2  0 1  norm 0 127
 12 n 27  note overdub 3  0 1  norm 0 127
+12 n 28  note overdub 4  0 1  norm 0 127
+12 n 29  note overdub 5  0 1  norm 0 127
+12 n 30  note overdub 6  0 1  norm 0 127
+12 n 31  note overdub 7  0 1  norm 0 127
 
 # Track specific mutes
 12 n 32  note mute 0  0 1  norm 0 127
 12 n 33  note mute 1  0 1  norm 0 127
 12 n 34  note mute 2  0 1  norm 0 127
 12 n 35  note mute 3  0 1  norm 0 127
+12 n 36  note mute 4  0 1  norm 0 127
+12 n 37  note mute 5  0 1  norm 0 127
+12 n 38  note mute 6  0 1  norm 0 127
+12 n 39  note mute 7  0 1  norm 0 127
 
 # Track specific record
 12 n 40  note record 0  0 1  norm 0 127
 12 n 41  note record 1  0 1  norm 0 127
 12 n 42  note record 2  0 1  norm 0 127
 12 n 43  note record 3  0 1  norm 0 127
+12 n 44  note record 4  0 1  norm 0 127
+12 n 45  note record 5  0 1  norm 0 127
+12 n 46  note record 6  0 1  norm 0 127
+12 n 47  note record 7  0 1  norm 0 127
 
 # Track specific levels (fader)
 12 cc 72  set wet 0  0 1  gain 0 127
 12 cc 73  set wet 1  0 1  gain 0 127
 12 cc 74  set wet 2  0 1  gain 0 127
 12 cc 75  set wet 3  0 1  gain 0 127
+12 cc 76  set wet 4  0 1  gain 0 127
+12 cc 77  set wet 5  0 1  gain 0 127
+12 cc 78  set wet 6  0 1  gain 0 127
+12 cc 79  set wet 7  0 1  gain 0 127
