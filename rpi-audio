@@ -96,8 +96,8 @@ start_jack_looper() {
         export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket
         # See available devices with "cat /proc/asound/cards"
         # Can use name or number at far left after the -dhw:
-        sudo -u pi jackd -P84 -p32 -t2000 -d alsa -dhw:Device -p 4096 -r 44100 -s -D -znone >> /home/pi/jack.log 2>&1 &
-        # sudo -u pi jackd -R -P84 -p3 -t2000 -M 128 -d alsa -dhw:Device -n 3 -p 64 -r 44100 -s -D -znone -X raw -i 1 -o 2 >> /home/pi/jack.log 2>&1 &
+        # sudo -u pi jackd -P84 -p32 -t2000 -d alsa -dhw:Device -p 4096 -r 44100 -s -D -znone >> /home/pi/jack.log 2>&1 &
+        sudo -u pi jackd -P60 -p16 -t2000 -d alsa -dhw:Device -n 2 -p 512 -r 44100 -s -D -znone -X raw >> /home/pi/jack.log 2>&1 &
     fi
 }
 

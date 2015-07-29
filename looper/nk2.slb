@@ -5,8 +5,8 @@
 12 n 2  note redo -1  0 1  norm 0 127
 12 n 3  note pause -1  0 1  norm 0 127
 12 n 4  note trigger -1  0 1  norm 0 127
-12 on 9  set select_prev_loop -2  0 1  norm 0 127
-12 on 10  set select_next_loop -2  0 1  norm 0 127
+# 12 on 9  set select_prev_loop -2  0 1  norm 0 127
+# 12 on 10  set select_next_loop -2  0 1  norm 0 127
 
 # Solo buttons for track-specific overdub
 12 n 24  note overdub 0  0 1  norm 0 127

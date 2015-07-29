@@ -95,6 +95,7 @@ fi
 sudo apt-get install -y python-dev python-setuptools librtmidi1 librtmidi-dev
 sudo easy_install pip
 sudo pip install rtmidi-python
+sudo pip install --upgrade pyliblo
 
 
 # Configuration for auto-login and auto-run
