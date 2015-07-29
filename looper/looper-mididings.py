@@ -63,7 +63,7 @@ def part_of_shutdown(ev):
             shutdown_b = True
         if ev.note == 8:
             shutdown_c = True
-        if shutdown_a and shutdown_b and shutdown_c
+        if shutdown_a and shutdown_b and shutdown_c:
             # TODO/FIXME - blink transport lights indicating shutdown
             # Ideally, rpi-audio stop will turn off 'power' light when done stopping
             # This won't work. I'm thinking I'll need to have a script running as root
