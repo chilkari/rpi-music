@@ -1,0 +1,113 @@
+#!/bin/bash
+
+# Note from http://lektiondestages.blogspot.com/2013/05/raspberry-pi-setup-configuration-stuff.html
+# Script downloaded from https://dl.dropboxusercontent.com/u/15313414/Blog/disable-ethernet
+
+# To disable the ethernet adapter manually, run as root:
+#
+#     echo 1-1.1:1.0 > /sys/bus/usb/drivers/smsc95xx/unbind
+#
+# Or use tee and sudo:
+#
+#     echo -n “1-1.1:1.0” | sudo tee /sys/bus/usb/drivers/smsc95xx/unbind
+#
+# You might need to remove and re-insert the WiFi adapter now and should be able to access the network.
+#
+# There is a script floating around the net which lets you do that automagically when starting up the Pi. Download the script and save it to /etc/init.d/disable-ethernet and then run:
+#     sudo chmod 755 /etc/init.d/disable-ethernet
+# To make it readable/executable for all users. To enable the script during boot, run:
+#     sudo insserv disable-ethernet
+# To disable the script from running during boot:
+#     sudo insserv -r disable-ethernet
+# To disable ethernet by hand, run:
+#     sudo service disable-ethernet start
+# To enable ethernet by hand (remove the WiFi device before running), run:
+#     sudo service disable-ethernet stop
+
+
+ 
+### BEGIN INIT INFO
+# Provides:          disable-ethernet
+# Required-Start:    $local_fs
+# Required-Stop:     
+# Default-Start:     S
+# Default-Stop:      
+# Short-Description: Disables on-board Ethernet to fix WiFi+Lapdock
+# Description:       When using the Raspberry Pi Model B on the
+#                    Motorola Atrix Lapdock, inserting certain WiFi
+#                    adapters into either the RPi's spare USB port or
+#                    the Lapdock's USB ports causes the on-board
+#                    Ethernet and WiFi adapter to malfunction.
+#                    Disabling the on-board Ethernet driver allows
+#                    the WiFi adapter to work simultaneously with the
+#                    Lapdock.
+### END INIT INFO
+ 
+. /lib/lsb/init-functions
+ 
+DEVICE_DIR=/sys/bus/usb/drivers/smsc95xx
+BUS_ID="1-1.1:1.0"
+INT_TOGGLE=true #issue ifdown and ifup?
+#INT_TOGGLE=false
+ 
+is_enabled () {
+    [ -L "$DEVICE_DIR/$BUS_ID" ] && return 0 || return 1
+}
+ 
+toggle_int () {
+    is_enabled || return 0 #ethernet not enabled
+    [ "$(ls -1 "$DEVICE_DIR/$BUS_ID/net" |wc -l)" -eq "1" ] || return 0 #something wrong
+    $INT_TOGGLE || return 0 #user doesn't want this
+    [ ! -f /run/network/ifstate ] && return 0 #run level S
+    int_name=$(ls -1 "$DEVICE_DIR/$BUS_ID/net")
+    if [ "$1" == "up" ]; then
+        log_action_begin_msg "Bringing on-board interface up"
+        ifup $int_name
+    else
+        log_action_begin_msg "Bringing on-board interface down"
+        ifdown $int_name
+    fi
+    log_action_end_msg $?
+}
+ 
+case "$1" in
+    start)
+        if ! is_enabled; then
+            log_failure_msg "Service already running. Exiting."
+            exit 0
+        fi
+        toggle_int down
+        log_action_begin_msg "Disabling on-board network interface"
+        echo "$BUS_ID" > $DEVICE_DIR/unbind
+        log_action_end_msg $?
+        exit $?
+        ;;
+    restart|reload|force-reload)
+        echo "Error: argument '$1' not supported" >&2
+        exit 3
+        ;;
+    stop)
+        if is_enabled; then
+            log_failure_msg "Service not running. Exiting."
+            exit 0
+        fi
+        log_action_begin_msg "Enabling on-board network interface"
+        echo "$BUS_ID" > $DEVICE_DIR/bind
+        log_action_end_msg $?
+        toggle_int up
+        exit $?
+        ;;
+    status)
+        if is_enabled; then
+            echo "Service is NOT running: on-board interface enabled" >&2
+            exit 1
+        else
+            echo "Service is running: on-board interface disabled"
+            exit 0
+        fi
+        ;;
+    *)
+        echo "Usage: $0 start|stop|status" >&2
+        exit 3
+        ;;
+esac
