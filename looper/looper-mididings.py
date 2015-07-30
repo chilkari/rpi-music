@@ -2,6 +2,7 @@
 
 import sys
 import os
+import subprocess
 from mididings import *
 from mididings.extra import *
 from mididings.extra.osc import SendOSC
@@ -31,59 +32,68 @@ config(
 # post = Print('output', portnames='out')
 
 
-# READY function - show user that we're ready to go:
-# Blink the far right Solo/Mute/Record LEDs 3 times.
-# They're mapped to notes 47(R), 39(M) and 31(S)
-#    Hex versions: 2F(R), 27(M), and 1F(S)
-# Knob 8 is CC 87, and Fader 8 is CC79 - should I think of something for them.
-# def show_ready():
-#     # NoteOnEvent(port, channel, note, velocity)
-#     solo_on = NoteOnEvent('NK2_OUT', 13, 31, 127)
+# Function key handling.
+# Track left is Func 1, Track right is Func 2
 
+function_1 = False
+function_2 = False
 
-# FIXME - build some 'status' calls that can be invoked by sending midi events
-# directly to mididings (which wouldn't normally come from the NK2) which then
-# kick of lighting of status lights.
-
-
-# To request a shutdown, user must hold set, left, right marker buttons together.
-shutdown_a = False
-shutdown_b = False
-shutdown_c = False
-
-def part_of_shutdown(ev):
-    # print "part_of_shutdown"
-    global shutdown_a
-    global shutdown_b
-    global shutdown_c
+def function_handler(ev):
+    """
+    F1 + Record = Request shutdown (halt)
+    F1 + Play   = Request restart
+    F1 + Stop   = Bounce wlan0
+    """
+    global function_1
+    global function_2
     if ev.type == NOTEON:
-        if ev.note == 6:
-            shutdown_a = True
-        if ev.note == 7:
-            shutdown_b = True
-        if ev.note == 8:
-            shutdown_c = True
-        if shutdown_a and shutdown_b and shutdown_c:
-            # TODO/FIXME - blink transport lights indicating shutdown
-            # Ideally, rpi-audio stop will turn off 'power' light when done stopping
-            # This won't work. I'm thinking I'll need to have a script running as root
-            # which looks for the presence of some sort of 'shutdown request' file. If
-            # it sees it (checks every 5-10 seconds or something), it deletes the file
-            # then shuts down. I would write that file here.
-            # Better approach if its running: use dbus to communicate from here to
-            # the running-as-root shutdown script.
-            with open('/home/pi/rpi-music/shutdown_request', 'w') as f:
-                f.write('shutdown, please!')
+        if ev.note == 9:   # Track Left
+            function_1 = True
+        if ev.note == 10:  # Track Right
+            function_2 = True
+        if ev.note == 5:   # Record
+            if function_1:
+                # F1+Record: Signal shutdown request
+                request_shutdown()
+        if ev.note == 4:   # Play
+            if function_1:
+                # F1+Play: Signal reboot request
+                request_reboot()
+        if ev.note == 3:   # Stop
+            if function_1:
+                # F1+Stop: Bounce wlan0
+                bounce_wlan()
+        if ev.note == 2:   # Fwd
+            if function_1:
+                # F1+Fwd = ?
+                pass
+        if ev.note == 1:   # Rew
+            if function_1:
+                # F1+Rew = Reset Looper
+                reset_looper()
+    elif ev.type == NOTEOFF:
+        if ev.note == 9:   # Track Left
+            function_1 = False
+        if ev.note == 10:  # Track Right
+            function_2 = False
+    
 
-    if ev.type == NOTEOFF:
-        if ev.note == 6:
-            shutdown_a = False
-        if ev.note == 7:
-            shutdown_b = False
-        if ev.note == 8:
-            shutdown_c = False
+def request_shutdown():
+    subprocess.call(["/home/pi/rpi-music/looper/announce.py", "blink_thrice"])
+    with open('/home/pi/rpi-music/shutdown_request', 'w') as f:
+	f.write('halt')
 
-def reset(ev):
+def request_reboot():
+    subprocess.call(["/home/pi/rpi-music/looper/announce.py", "blink_twice"])
+    with open('/home/pi/rpi-music/shutdown_request', 'w') as f:
+	f.write('reboot')
+
+def bounce_wlan():
+    subprocess.call(["/home/pi/rpi-music/looper/announce.py", "blink_once"])
+    subprocess.call(["/home/pi/rpi-music/bounce_wlan.sh"])
+
+def reset_looper():
+    subprocess.call(["/home/pi/rpi-music/looper/announce.py", "blink_once"])
     # Straight liblo here for OSC
     try:
         # ping for testing...
@@ -97,8 +107,7 @@ def reset(ev):
 scenes = {
     1: Scene("looper", [
         Channel(13) >> Port('NK2_OUT'),
-        Filter(NOTEON) >> KeyFilter(notes=[9]) >> Process(reset),
-        KeyFilter(notes=[0,6,7,8]) >> Process(part_of_shutdown),
+        Filter(NOTEON) >> KeyFilter(0,10) >> Process(function_handler),
         Filter(NOTE) >> Port('SL'),
         Filter(CTRL) >> Port('SL'),
     ])

@@ -81,6 +81,40 @@ class Announcer(object):
             for i in range(24):
                 self.mo.send_message([0x8C, i+24, 127])
             rep += 1
+
+    def tracks_all_on(self):
+        self.clear()
+        step = 0
+        while step < 8:
+            self.mo.send_message([0x9C, 47-step, 127])
+            self.mo.send_message([0x9C, 39-step, 127])
+            self.mo.send_message([0x9C, 31-step, 127])
+            step += 1
+
+    def blink_once(self):
+        self._blink_n(1, 0.5)
+
+    def blink_twice(self):
+        self._blink_n(2, 0.25)
+
+    def blink_thrice(self):
+        self._blink_n(3, 0.15)
+
+    def _blink_n(self, count, pause):
+        rep = 0
+        while rep < count:
+            self.clear()
+            step = 0
+            while step < 8:
+                self.mo.send_message([0x9C, 47-step, 127])
+                self.mo.send_message([0x9C, 39-step, 127])
+                self.mo.send_message([0x9C, 31-step, 127])
+                step += 1
+            sleep(pause)
+            self.clear()
+            sleep(pause)
+            rep += 1
+
     
     def announce(self, args):
         if len(args) != 2:
