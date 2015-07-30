@@ -85,7 +85,7 @@ def request_shutdown():
 
 def request_reboot():
     subprocess.call(["/home/pi/rpi-music/looper/announce.py", "blink_twice"])
-    with open('/home/pi/rpi-music/shutdown_request', 'w') as f:
+    with open('/home/pi/rpi-music/reboot_request', 'w') as f:
 	f.write('reboot')
 
 def bounce_wlan():

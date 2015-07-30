@@ -18,11 +18,18 @@ echo "FIXME - NEED TO REPAIR CHECK FOR RUNNING IN SHUTDOWN MONITOR. IF LOGGING I
 # fi
 
 sfile="/home/pi/rpi-music/shutdown_request"
+rfile="/home/pi/rpi-music/reboot_request"
 # Upon booting, we don't immediately want to honor a shutdown request
 if  [ -f $sfile ];
 then
     rm $sfile
 fi
+# Reboot request - clear if present at startup
+if  [ -f $rfile ];
+then
+    rm $rfile
+fi
+
 
 while true
 do
@@ -31,6 +38,12 @@ then
    rm $sfile
    /home/pi/rpi-audio/looper/rpi-audio stop $MACHINE_TYPE
    sudo shutdown -h now
+fi
+if [ -f $rfile ];
+then
+   rm $rfile
+   /home/pi/rpi-audio/looper/rpi-audio stop $MACHINE_TYPE
+   sudo shutdown -r now
 fi
 sleep 5
 done
