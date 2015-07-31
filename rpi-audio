@@ -96,8 +96,9 @@ start_jack_looper() {
         export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket
         # See available devices with "cat /proc/asound/cards"
         # Can use name or number at far left after the -dhw:
-        # sudo -u pi jackd -P84 -p32 -t2000 -d alsa -dhw:Device -p 4096 -r 44100 -s -D -znone >> /home/pi/jack.log 2>&1 &
-        sudo -u pi jackd -P84 -p16 -t2000 -d alsa -dhw:Device -n 4 -p 256 -r 44100 -s -D -znone -X raw >> /home/pi/jack.log 2>&1 &
+        # Note -- when running at 44100 -- I get subtle, but noticeable loop sync issues, even with overdubs on a single looper.
+        # By dropping freq to 22050 - these seem to go away. I've also tried 32768 - and as expected it's between the two.
+        sudo -u pi jackd -P84 -p16 -t2000 -d alsa -dhw:Device -n 3 -p 256 -r 22050 -s -D -znone -X raw >> /home/pi/jack.log 2>&1 &
     fi
 }
 
