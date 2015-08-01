@@ -132,8 +132,11 @@ def function_handler(ev):
                 pass
         if ev.note == 1:   # Rew
             if function_1:
-                # F1+Rew = Reset Looper
+                # F1+Rew = Reset Looper State
                 reset_looper()
+            if function_2:
+                # F2+Rew - Refresh looper (stop SL/Restart, Reconnect)
+                refresh_looper()
     elif ev.type == NOTEOFF:
         # Pass the noteoff event through to the nano
         # As long as its not the 'cycle' button
@@ -170,6 +173,10 @@ def reset_looper():
         liblo.send(SLPORT, "/load_session", "/home/pi/rpi-music/looper/session.slsess", "osc.udp://127.0.0.1:9999", "/load_errors")
     except:
         print sys.exc_info()
+
+def refresh_looper():
+    subprocess.call(["/home/pi/rpi-music/looper/announce.py", "blink_twice"])
+    subprocess.call(["/home/pi/rpi-music/rpi-audio", "refresh", "looper"])
 
 scenes = {
     1: Scene("looper", [

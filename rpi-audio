@@ -177,6 +177,26 @@ start_looper() {
     /home/pi/rpi-music/looper/announce.py cycle_on
 }
 
+refresh_looper() {
+    # 'refresh' here means to stop the sooper looper engine,
+    # then restart it, and hook everything back up.
+    RUNNING=`pgrep sooperlooper`
+    if [ "${#RUNNING}" -gt 0 ] ; then
+        echo "Stopping sooperlooper..."
+        sudo killall sooperlooper 2>&1
+    else
+        echo "sooperlooper not running."
+    fi
+    sleep 1
+    start_sooperlooper
+    sleep 2
+    connect_jack_looper
+    sleep 1
+    connect_midi_looper
+    /home/pi/rpi-music/looper/announce.py spiral
+    /home/pi/rpi-music/looper/announce.py cycle_on
+}
+
 stop_looper() {
     echo "rpi-audio: stopping..."
     RUNNING=`pgrep sooperlooper`
@@ -217,6 +237,17 @@ case "$1" in
                  echo "Unrecognized machine type. {looper|sampler|organ}"
                  ;;
 
+         esac
+         ;;
+
+     refresh)
+         case "$2" in
+             looper)
+                 refresh_looper
+                 ;;
+             *)
+                 echo "Unrecognized machine type. {looper|sampler|organ}"
+                 ;;
          esac
          ;;
 
