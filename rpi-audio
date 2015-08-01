@@ -98,7 +98,7 @@ start_jack_looper() {
         # Can use name or number at far left after the -dhw:
         # Note -- when running at 44100 -- I get subtle, but noticeable loop sync issues, even with overdubs on a single looper.
         # By dropping freq to 22050 - these seem to go away. I've also tried 32768 - and as expected it's between the two.
-        sudo -u pi jackd -P84 -p16 -t2000 -d alsa -dhw:Device -n 3 -p 256 -r 22050 -s -D -znone -X raw >> /home/pi/jack.log 2>&1 &
+        sudo -u pi jackd -P84 -p16 -t2000 -d alsa -dhw:Device -n 4 -p 1024 -r 22050 -s -D -znone -X raw >> /home/pi/jack.log 2>&1 &
     fi
 }
 
@@ -156,19 +156,19 @@ start_looper() {
 
     /home/pi/rpi-music/looper/announce.py fwd_on
     start_jack_looper
-    sleep 3
+    sleep 2
 
     /home/pi/rpi-music/looper/announce.py stop_on
     start_sooperlooper
-    sleep 3
+    sleep 2
 
     /home/pi/rpi-music/looper/announce.py play_on
     start_mididings_looper
-    sleep 7
+    sleep 5
 
     /home/pi/rpi-music/looper/announce.py rec_on
     connect_jack_looper
-    sleep 2
+    sleep 1
 
     /home/pi/rpi-music/looper/announce.py clear
     connect_midi_looper
