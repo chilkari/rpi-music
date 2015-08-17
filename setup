@@ -7,7 +7,7 @@
 
 # Modify the following to determine the type of machine you actually
 # want to run:   {looper|sampler|organ}
-MACHINE_TYPE=looper
+MACHINE_TYPE=sampler
 
 # Basic setup ------------------------
 
@@ -96,7 +96,8 @@ sudo apt-get install -y python-dev python-setuptools librtmidi1 librtmidi-dev
 sudo easy_install pip
 sudo pip install rtmidi-python
 sudo pip install --upgrade pyliblo
-
+sudo pip install boto
+sudo pip install pyyaml
 
 # Configuration for auto-login and auto-run
 

@@ -6,7 +6,7 @@
 # and shutdown down the RPi.
 
 # Define your machine type here {looper|sampler|organ}
-MACHINE_TYPE=looper
+MACHINE_TYPE=sampler
 
 # First, see if shutdown_monitor is already running. (This happens if you
 # boot the RPi, then login from a console, which tries to run it again)
